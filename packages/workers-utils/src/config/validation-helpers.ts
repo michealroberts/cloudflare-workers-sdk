@@ -601,6 +601,9 @@ export const getBindingNames = (value: unknown): string[] => {
 		return value.bindings.map(({ name }) => name);
 	} else if (isNamespaceList(value)) {
 		return value.map(({ binding }) => binding);
+	} else if (isNamedList(value)) {
+		// send_email and ratelimits bindings use `name` rather than `binding`
+		return value.map(({ name }) => name);
 	} else if (isRecord(value)) {
 		// browser and AI bindings are single values with a similar shape
 		// { binding = "name" }
@@ -633,6 +636,13 @@ const isNamespaceList = (value: unknown): value is { binding: string }[] =>
 	value.every(
 		(entry) =>
 			isRecord(entry) && "binding" in entry && typeof entry.binding === "string"
+	);
+
+const isNamedList = (value: unknown): value is { name: string }[] =>
+	Array.isArray(value) &&
+	value.every(
+		(entry) =>
+			isRecord(entry) && "name" in entry && typeof entry.name === "string"
 	);
 
 const isRecord = (

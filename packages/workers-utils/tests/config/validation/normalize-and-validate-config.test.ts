@@ -7087,6 +7087,34 @@ describe("normalizeAndValidateConfig()", () => {
 			`);
 		});
 
+		it("should error on send_email and ratelimits binding name conflicts", ({
+			expect,
+		}) => {
+			const { diagnostics } = normalizeAndValidateConfig(
+				{
+					send_email: [{ name: "EMAIL" }, { name: "EMAIL" }],
+					kv_namespaces: [{ binding: "SHARED", id: "1234" }],
+					ratelimits: [
+						{
+							name: "SHARED",
+							namespace_id: "1001",
+							simple: { limit: 10, period: 60 },
+						},
+					],
+				},
+				undefined,
+				undefined,
+				{ env: undefined }
+			);
+
+			expect(diagnostics.hasWarnings()).toBe(false);
+			expect(diagnostics.errors).toEqual([
+				"SHARED assigned to KV Namespace and Rate Limit bindings.",
+				"EMAIL assigned to multiple Send Email bindings.",
+				"Bindings must have unique names, so that they can all be referenced in the worker.\nPlease change your bindings to have unique names.",
+			]);
+		});
+
 		describe("[d1_databases]", () => {
 			it("should error if d1_databases is an object", ({ expect }) => {
 				const { diagnostics } = normalizeAndValidateConfig(
